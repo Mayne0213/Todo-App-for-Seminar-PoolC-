@@ -45,7 +45,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
         onClick={handleDelete}
         variant="outline"
         size="sm"
-        className="text-red-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+        className="text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
       >
         삭제
       </Button>
