@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <div>
+    <div className="bg-blue-500">
       This page will be filled with Todo App
     </div>
   );
