@@ -16,25 +16,26 @@ export default function TodoItem({ todo }: TodoItemProps) {
   const handleToggle = () => toggleTodo(todo.id)
 
   return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
-      <div className="flex items-center gap-3 flex-1">
+    // TODO : flex 레이아웃을 사용하여 가로로 배치하고, 아이템들을 양 끝에 정렬하세요. 세로 패딩 3단위(12px), 아래쪽 테두리를 추가하세요.
+    <div className="fillout last:border-b-0">
+      {/* TODO: flex 레이아웃을 사용하여 가로로 배치하고, 아이템들을 세로 중앙 정렬하세요. gap 3단위(12px), flex-1을 추가하세요. */}
+      <div className="fillout">
         <Checkbox
           checked={todo.completed}
           onCheckedChange={handleToggle}
           className="w-4 h-4"
         />
-        <div className="flex-1 flex items-center gap-2">
+        {/* TODO: flex-1과 flex 레이아웃을 사용하여 가로로 배치하고, 아이템들을 세로 중앙 정렬하세요. gap 2단위(8px)를 추가하세요. */}
+        <div className="fillout">
+          {/* TODO: todo.completed가 true일 때는 회색 텍스트(text-gray-400)를, false일 때는 어두운 회색 텍스트(text-gray-800)를 적용하세요. (line-through는 이미 적용되어 있습니다) */}
           <span
-            className={`${
-              todo.completed
-                ? 'line-through text-gray-400'
-                : 'text-gray-800'
-            }`}
+            className={`${todo.completed ? 'fillout' : 'fillout'}`}
           >
             {todo.title}
           </span>
+          {/* TODO: 좌우 패딩 2단위(8px), 세로 패딩 1단위(4px), 매우 작은 텍스트(text-xs), 둥근 모서리(rounded-full)를 추가하세요. (PRIORITY_COLORS는 이미 적용되어 있습니다) */}
           <span
-            className={`px-2 py-1 text-xs rounded-full ${PRIORITY_COLORS[todo.priority]}`}
+            className={`fillout ${PRIORITY_COLORS[todo.priority]}`}
           >
             {PRIORITY_LABELS[todo.priority]}
           </span>

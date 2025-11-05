@@ -2,12 +2,13 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Todo, CreateTodoData, UpdateTodoData, TodoStore, TodoFilter, TodoSort, PRIORITY_ORDER } from './types'
 import { generateId } from '../../../shared/lib/utils'
+import { getInitialTodos } from './initialData'
 
 export const useTodoStore = create<TodoStore>()(
   persist(
     (set) => ({
       // State
-      todos: [],
+      todos: getInitialTodos(), // 강의용: 초기 상태로 3개의 할 일 설정
       filter: 'all',
       sort: 'createdAt',
       searchQuery: '',
@@ -103,12 +104,23 @@ export const useTodoStore = create<TodoStore>()(
       partialize: (state) => ({ todos: state.todos }),
       onRehydrateStorage: () => (state) => {
         if (state) {
+          // 강의용: 항상 초기 데이터 3개로 설정 (페이지 새로고침 시)
+          state.todos = getInitialTodos()
+          
           // Date 객체 복원
           state.todos = state.todos.map(todo => ({
             ...todo,
             createdAt: new Date(todo.createdAt),
             updatedAt: new Date(todo.updatedAt),
           }))
+        } else {
+          // state가 없을 때도 초기 데이터 설정
+          return {
+            todos: getInitialTodos(),
+            filter: 'all',
+            sort: 'createdAt',
+            searchQuery: '',
+          }
         }
       },
     }
