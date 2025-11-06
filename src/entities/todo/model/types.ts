@@ -31,17 +31,20 @@ export interface TodoState {
   filter: TodoFilter
   sort: TodoSort
   searchQuery: string
+  isLoading: boolean
+  error: string | null
 }
 
 export interface TodoActions {
-  addTodo: (data: CreateTodoData) => void
-  updateTodo: (id: string, data: UpdateTodoData) => void
-  deleteTodo: (id: string) => void
-  toggleTodo: (id: string) => void
+  addTodo: (data: CreateTodoData) => Promise<void>
+  updateTodo: (id: string, data: UpdateTodoData) => Promise<void>
+  deleteTodo: (id: string) => Promise<void>
+  toggleTodo: (id: string) => Promise<void>
+  loadTodos: () => Promise<void>
   setFilter: (filter: TodoFilter) => void
   setSort: (sort: TodoSort) => void
   setSearchQuery: (query: string) => void
-  clearCompleted: () => void
+  clearCompleted: () => Promise<void>
 }
 
 export type TodoStore = TodoState & TodoActions

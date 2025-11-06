@@ -1,131 +1,123 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { Todo, CreateTodoData, UpdateTodoData, TodoStore, TodoFilter, TodoSort, PRIORITY_ORDER } from './types'
-import { generateId } from '../../../shared/lib/utils'
-import { getInitialTodos } from './initialData'
+import { CreateTodoData, UpdateTodoData, TodoStore, TodoFilter, TodoSort, PRIORITY_ORDER } from './types'
+import { fetchTodos, createTodo, updateTodo, deleteTodo } from '../api/client'
 
-export const useTodoStore = create<TodoStore>()(
-  persist(
-    (set) => ({
-      // State
-      todos: getInitialTodos(), // 강의용: 초기 상태로 3개의 할 일 설정
-      filter: 'all',
-      sort: 'createdAt',
-      searchQuery: '',
+export const useTodoStore = create<TodoStore>()((set, get) => ({
+  // State
+  todos: [],
+  filter: 'all',
+  sort: 'createdAt',
+  searchQuery: '',
+  isLoading: false,
+  error: null,
 
-      // Actions
-      addTodo: (data: CreateTodoData) => {
-        if (!data.title?.trim()) {
-          console.warn('Todo title is required')
-          return
-        }
-        
-        const newTodo: Todo = {
-          id: generateId(),
-          title: data.title.trim(),
-          description: data.description?.trim(),
-          completed: false,
-          priority: data.priority || 'medium',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }
-        set((state) => ({
-          todos: [...state.todos, newTodo]
-        }))
-      },
-
-      updateTodo: (id: string, data: UpdateTodoData) => {
-        if (!id) {
-          console.warn('Todo ID is required for update')
-          return
-        }
-        
-        set((state) => ({
-          todos: state.todos.map((todo) =>
-            todo.id === id
-              ? { 
-                  ...todo, 
-                  ...data, 
-                  title: data.title?.trim() || todo.title,
-                  description: data.description?.trim() || todo.description,
-                  updatedAt: new Date() 
-                }
-              : todo
-          )
-        }))
-      },
-
-      deleteTodo: (id: string) => {
-        if (!id) {
-          console.warn('Todo ID is required for deletion')
-          return
-        }
-        
-        set((state) => ({
-          todos: state.todos.filter((todo) => todo.id !== id)
-        }))
-      },
-
-      toggleTodo: (id: string) => {
-        if (!id) {
-          console.warn('Todo ID is required for toggle')
-          return
-        }
-        
-        set((state) => ({
-          todos: state.todos.map((todo) =>
-            todo.id === id
-              ? { ...todo, completed: !todo.completed, updatedAt: new Date() }
-              : todo
-          )
-        }))
-      },
-
-      setFilter: (filter: TodoFilter) => {
-        set({ filter })
-      },
-
-      setSort: (sort: TodoSort) => {
-        set({ sort })
-      },
-
-      setSearchQuery: (query: string) => {
-        set({ searchQuery: query })
-      },
-
-      clearCompleted: () => {
-        set((state) => ({
-          todos: state.todos.filter((todo) => !todo.completed)
-        }))
-      },
-    }),
-    {
-      name: 'todo-storage',
-      partialize: (state) => ({ todos: state.todos }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          // 강의용: 항상 초기 데이터 3개로 설정 (페이지 새로고침 시)
-          state.todos = getInitialTodos()
-          
-          // Date 객체 복원
-          state.todos = state.todos.map(todo => ({
-            ...todo,
-            createdAt: new Date(todo.createdAt),
-            updatedAt: new Date(todo.updatedAt),
-          }))
-        } else {
-          // state가 없을 때도 초기 데이터 설정
-          return {
-            todos: getInitialTodos(),
-            filter: 'all',
-            sort: 'createdAt',
-            searchQuery: '',
-          }
-        }
-      },
+  // Actions
+  addTodo: async (data: CreateTodoData) => {
+    if (!data.title?.trim()) {
+      console.warn('Todo title is required')
+      return
     }
-  )
-)
+
+    try {
+      const newTodo = await createTodo(data)
+      set((state) => ({
+        todos: [...state.todos, newTodo]
+      }))
+    } catch (error) {
+      console.error('Failed to create todo:', error)
+      set({ error: 'Failed to create todo' })
+    }
+  },
+
+  updateTodo: async (id: string, data: UpdateTodoData) => {
+    if (!id) {
+      console.warn('Todo ID is required for update')
+      return
+    }
+
+    try {
+      const updatedTodo = await updateTodo(id, data)
+      set((state) => ({
+        todos: state.todos.map((todo) =>
+          todo.id === id ? updatedTodo : todo
+        )
+      }))
+    } catch (error) {
+      console.error('Failed to update todo:', error)
+      set({ error: 'Failed to update todo' })
+    }
+  },
+
+  deleteTodo: async (id: string) => {
+    if (!id) {
+      console.warn('Todo ID is required for deletion')
+      return
+    }
+
+    try {
+      await deleteTodo(id)
+      set((state) => ({
+        todos: state.todos.filter((todo) => todo.id !== id)
+      }))
+    } catch (error) {
+      console.error('Failed to delete todo:', error)
+      set({ error: 'Failed to delete todo' })
+    }
+  },
+
+  toggleTodo: async (id: string) => {
+    if (!id) {
+      console.warn('Todo ID is required for toggle')
+      return
+    }
+
+    const todo = get().todos.find((t) => t.id === id)
+    if (!todo) return
+
+    try {
+      await get().updateTodo(id, { completed: !todo.completed })
+    } catch (error) {
+      console.error('Failed to toggle todo:', error)
+    }
+  },
+
+  loadTodos: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const todos = await fetchTodos()
+      set({ todos, isLoading: false })
+    } catch (error) {
+      console.error('Failed to load todos:', error)
+      set({ error: 'Failed to load todos', isLoading: false })
+    }
+  },
+
+  setFilter: (filter: TodoFilter) => {
+    set({ filter })
+  },
+
+  setSort: (sort: TodoSort) => {
+    set({ sort })
+  },
+
+  setSearchQuery: (query: string) => {
+    set({ searchQuery: query })
+  },
+
+  clearCompleted: async () => {
+    const completedTodos = get().todos.filter((todo) => todo.completed)
+    
+    try {
+      await Promise.all(completedTodos.map((todo) => deleteTodo(todo.id)))
+      set((state) => ({
+        todos: state.todos.filter((todo) => !todo.completed)
+      }))
+    } catch (error) {
+      console.error('Failed to clear completed todos:', error)
+      set({ error: 'Failed to clear completed todos' })
+    }
+  },
+}))
 
 // Selectors
 export const useFilteredTodos = () => {
